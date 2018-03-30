@@ -1,0 +1,12 @@
+{
+	"daemon": {
+		"listen-host": "127.0.0.1"
+		"listen-port": 8053,
+		"console-log": true
+	},
+	"nameservers": [
+		"8.8.8.8",
+		"8.8.4.4"
+	],
+	"value-option": 600
+}
