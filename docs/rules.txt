@@ -1,0 +1,6 @@
+[targets]
+allow: allow dns query to default engine
+deny: deny dns query
+reply: alternate reply to dns query
+ns: alternate dns server to serve query
+
