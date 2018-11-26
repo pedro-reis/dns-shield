@@ -3,6 +3,7 @@
 let dns = require('native-dns');
 let server = dns.createServer();
 let async = require('async');
+var sqlite3 = require('sqlite3').verbose();
 
 server.on('listening', () => console.log('server listening on', server.address()));
 server.on('close', () => console.log('server closed', server.address()));
@@ -15,6 +16,7 @@ let authority = { address: '8.8.8.8', port: 53, type: 'udp' };
 
 function proxy(question, response, cb) {
 	//console.log('proxying', JSON.stringify(question));
+//	console.time('proxy');
 
 	var request = dns.Request({
 		question: question, // forwarding the question
@@ -34,8 +36,10 @@ function proxy(question, response, cb) {
 				//console.log('remote DNS response: ', a)
 		});
 	});
-
 	request.on('end', cb);
+
+//	console.timeEnd('proxy');
+
 	request.send();
 }
 
