@@ -3,26 +3,37 @@
 let dns = require('native-dns');
 let server = dns.createServer();
 let async = require('async');
-//var sqlite3 = require('sqlite3').verbose();
+
+process.on('exit', function(code) {  
+	return console.log(`DNS Shield Exit!`);
+});
+
 
 const mariadb = require('mariadb');
-mariadb.createConnection({
-      host: '127.0.0.1',
-	database: 'dns-shield',
-      user:'dns-shield',
-      password: 'dns55='
-    })
-    .then(conn => {
-      console.log("connected ! connection id is " + conn.threadId);
-    })
-    .catch(err => {
-      console.log("not connected due to error: " + err);
-    });
 
-global.mariadb = mariadb;
+const pool = mariadb.createPool({socketPath: '/var/run/mysqld/mysqld.sock', user: 'dns-shield', password: 'dns55=', database: 'dns-shield', connectionLimit: 5});
+
+async function asyncSqlQueryLogInsert(request_address, request_port, request_name, request_type) {
+	let conn, log_id;
+	try {
+		conn = await pool.getConnection();
+		const resquerylog = await conn.query("insert into `query-log` values ('', unix_timestamp(), ?, ?, '', '', '', '')", 
+										[request_address, request_port]);
+		log_id = resquerylog.insertId;
+
+		const resqueryrequest = await conn.query("insert into `query-request` (`log_id`, `id`, `name`, `type`) VALUES (?, NULL, ?, ?)", 
+										[log_id, request_name, request_type]);
+										
+	} catch (err) {
+		throw err;
+	} finally {
+		if (conn) return conn.end();
+	}
+}
 
 
-console.log(mariadb);
+//process.exit();
+
 
 
 server.on('listening', () => console.log('server listening on', server.address()));
@@ -66,22 +77,19 @@ function proxy(question, response, cb) {
 
 function handleRequest(request, response) {
 
-	//console.log (request.question[0]);
+	console.log (request.question[0].name);
 
+/*
 	console.log (request.address.address);
-        console.log (request.address.port);
-        console.log (request.question['name']);
-        console.log (request.question['type']);
+	console.log (request.address.port);
+	console.log (request.question[0].name);
+	console.log (request.question[0].type);
+*/
+
+	asyncSqlQueryLogInsert(request.address.address,request.address.port, request.question[0].name, request.question[0].type);
 
 
-mariadb.query("INSERT INTO `query-log` VALUES ('', unix_timestamp(), ?, ?, '', '', '', '')", 
-	 [request.address.address,request.address.port]
-  	)
-  	.then( )
-  	.catch(console.log);
-
-
-	var question = request.question[0].name;
+	//var question = request.question[0].name;
 	
 	//console.log('request from', request.address.address, 'for', question.name);
 	//console.log('questions', request.question);
