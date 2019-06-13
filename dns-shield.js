@@ -3,7 +3,27 @@
 let dns = require('native-dns');
 let server = dns.createServer();
 let async = require('async');
-var sqlite3 = require('sqlite3').verbose();
+//var sqlite3 = require('sqlite3').verbose();
+
+const mariadb = require('mariadb');
+mariadb.createConnection({
+      host: '127.0.0.1',
+	database: 'dns-shield',
+      user:'dns-shield',
+      password: 'dns55='
+    })
+    .then(conn => {
+      console.log("connected ! connection id is " + conn.threadId);
+    })
+    .catch(err => {
+      console.log("not connected due to error: " + err);
+    });
+
+global.mariadb = mariadb;
+
+
+console.log(mariadb);
+
 
 server.on('listening', () => console.log('server listening on', server.address()));
 server.on('close', () => console.log('server closed', server.address()));
@@ -33,7 +53,7 @@ function proxy(question, response, cb) {
 	request.on('message', (err, msg) => {
 		msg.answer.forEach(a => {
 				response.answer.push(a);
-				//console.log('remote DNS response: ', a)
+				console.log(a)
 		});
 	});
 	request.on('end', cb);
@@ -45,9 +65,22 @@ function proxy(question, response, cb) {
 
 
 function handleRequest(request, response) {
-	
-	console.log (request.question[0]);
-	
+
+	//console.log (request.question[0]);
+
+	console.log (request.address.address);
+        console.log (request.address.port);
+        console.log (request.question['name']);
+        console.log (request.question['type']);
+
+
+mariadb.query("INSERT INTO `query-log` VALUES ('', unix_timestamp(), ?, ?, '', '', '', '')", 
+	 [request.address.address,request.address.port]
+  	)
+  	.then( )
+  	.catch(console.log);
+
+
 	var question = request.question[0].name;
 	
 	//console.log('request from', request.address.address, 'for', question.name);
