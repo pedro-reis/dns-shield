@@ -4,7 +4,7 @@
   "description": "DNS Shield Proxy",
   "main": "dns-shield.js",
   "dependencies": {
-    "async": "^2.6.1",
+    "async": "^3.2.2",
     "body-parser": "^1.18.3",
     "buffercursor": "0.0.12",
     "express": "^4.16.4",
